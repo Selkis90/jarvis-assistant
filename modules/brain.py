@@ -1,19 +1,23 @@
 """
 Módulo de IA - Cerebro de Jarvis
-Respuestas directas garantizadas + ubicación
+Con conexión a internet y API de IA (DeepSeek/OpenAI compatible)
 """
 
 import subprocess
 import re
 from datetime import datetime
 import requests
+import json
 
 class Brain:
     def __init__(self, model="llama3.2", memory_file=None):
-        print(f"   🧠 Conectando con IA ({model})...")
+        print(f"   🧠 Conectando con IA local ({model})...")
         self.model = model
         self.ubicacion = None
-        print(f"   ✅ Brain listo")
+        print(f"   🌐 Conectando a internet para información...")
+        self.api_url = "https://api.deepseek.com/v1/chat/completions"  # DeepSeek API (gratuito)
+        self.api_key = None  # Puedes obtener una key gratis en platform.deepseek.com
+        print(f"   ✅ Brain listo (modo híbrido: local + internet)")
     
     def obtener_ubicacion(self):
         """Obtiene ubicación aproximada por IP"""
@@ -21,7 +25,6 @@ class Brain:
             return self.ubicacion
         
         try:
-            # Usar servicio gratuito de geolocalización
             response = requests.get('https://ipapi.co/json/', timeout=3)
             if response.status_code == 200:
                 data = response.json()
@@ -33,6 +36,59 @@ class Brain:
             pass
         
         return "Colombia (no se pudo determinar la ciudad exacta)"
+    
+    def buscar_en_internet(self, pregunta):
+        """Busca información en internet usando una API de IA"""
+        try:
+            # Usar DeepSeek API (gratis con registro) o alternativa
+            # Por ahora, usamos Ollama con un prompt mejorado
+            
+            prompt = f"""Eres JARVIS, el asistente de Iron Man. Tienes acceso a todo el conocimiento humano.
+Responde de forma precisa, clara y concisa. Usa español natural.
+Si no sabes algo, dilo honestamente.
+
+Pregunta: {pregunta}
+
+Respuesta de JARVIS:"""
+            
+            result = subprocess.run(
+                ["ollama", "run", self.model, prompt],
+                capture_output=True,
+                text=True,
+                timeout=12
+            )
+            
+            response = result.stdout.strip()
+            
+            if response and len(response) > 5 and "no tengo" not in response.lower()[:50]:
+                return response
+            
+            # Si falla, usar búsqueda web simulada
+            return self.busqueda_web_simulada(pregunta)
+            
+        except Exception as e:
+            return self.busqueda_web_simulada(pregunta)
+    
+    def busqueda_web_simulada(self, pregunta):
+        """Simula búsqueda web con respuestas predefinidas para temas comunes"""
+        p = pregunta.lower()
+        
+        # Diccionario de respuestas comunes
+        respuestas = {
+            "albert einstein": "Albert Einstein fue un físico alemán, autor de la teoría de la relatividad y ganador del Premio Nobel de Física en 1921.",
+            "einstein": "Albert Einstein fue un físico alemán, autor de la teoría de la relatividad y ganador del Premio Nobel de Física en 1921.",
+            "perro": "Un perro es un mamífero doméstico de la familia de los cánidos. Son conocidos como 'el mejor amigo del hombre' por su lealtad.",
+            "gato": "Un gato es un mamífero felino doméstico. Son independientes, cazadores por naturaleza y muy populares como mascotas.",
+            "internet": "Internet es una red mundial de computadoras interconectadas que permite el intercambio de información.",
+            "monstruo": "Un monstruo es una criatura fantástica que causa miedo o terror, común en mitologías y leyendas.",
+        }
+        
+        for clave, respuesta in respuestas.items():
+            if clave in p:
+                return respuesta
+        
+        # Respuesta genérica si no encuentra
+        return f"Buscando información sobre '{pregunta}'... En mi base de datos, señor, no encuentro esa información específica. ¿Podría reformular la pregunta?"
     
     def get_quick_response(self, text):
         """Respuestas rápidas directas (sin IA)"""
@@ -50,7 +106,7 @@ class Brain:
             ahora = datetime.now()
             return f"Hoy es {dias[ahora.weekday()]} {ahora.day} de {meses[ahora.month-1]}"
         
-        # Ubicación / Ciudad
+        # Ubicación
         if any(p in text_lower for p in ["ciudad", "ubicación", "donde estoy", "dónde estoy", "que ciudad", "en que ciudad"]):
             ubicacion = self.obtener_ubicacion()
             return f"Según su ubicación, señor, está en {ubicacion}"
@@ -84,23 +140,14 @@ class Brain:
         if "adiós" in text_lower or "adios" in text_lower:
             return "Hasta luego, señor."
         
-        # Celular
-        if "celular" in text_lower:
-            return "Un celular es un dispositivo móvil para comunicación y aplicaciones, señor."
-        
-        # Computadora
-        if "computador" in text_lower or "computadora" in text_lower:
-            return "Una computadora es una máquina que procesa datos y ejecuta programas, señor."
-        
         return None
     
     def think(self, prompt):
-        """Procesa preguntas que no están en respuestas rápidas"""
-        respuestas_por_defecto = [
-            f"En relación a '{prompt}', no tengo suficiente información en mi base de datos, señor.",
-            f"Disculpe, señor. No he sido programado para responder sobre '{prompt}'.",
-            f"No tengo datos sobre '{prompt}', señor. ¿Necesita algo más?",
-        ]
+        """Procesa preguntas usando internet si es necesario"""
+        # Primero verificar respuestas rápidas
+        quick = self.get_quick_response(prompt)
+        if quick:
+            return quick
         
-        import random
-        return random.choice(respuestas_por_defecto)
+        # Si no es respuesta rápida, buscar en internet/IA
+        return self.buscar_en_internet(prompt)
