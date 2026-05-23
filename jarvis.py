@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
 """
 JARVIS - Asistente Personal Profesional
-Arquitectura modular con Whisper + Ollama + Edge TTS
+Versión completa con memoria, caché y configuración central
 """
 
 import sys
 import time
 import threading
 from datetime import datetime
+from pathlib import Path
 
-# Importar módulos
+# Agregar módulos al path
+sys.path.insert(0, str(Path(__file__).parent))
+
+from config.settings import *
 from modules.listener import Listener
 from modules.brain import Brain
 from modules.voice import Voice
@@ -18,13 +22,18 @@ from modules.actions import Actions
 class Jarvis:
     def __init__(self):
         print("\n" + "="*60)
-        print("   🎤 JARVIS - Asistente Personal Profesional")
+        print("   🎤 JARVIS - Asistente Personal Profesional v2.0")
         print("="*60)
         
-        # Inicializar módulos
         print("\n📦 Cargando módulos:")
-        self.listener = Listener(model_name="base", threshold=0.006, duration=3.5)
-        self.brain = Brain(model="llama3.2")
+        
+        # Inicializar módulos
+        self.listener = Listener(
+            model_name=WHISPER_MODEL, 
+            threshold=THRESHOLD, 
+            duration=DURATION
+        )
+        self.brain = Brain(model=OLLAMA_MODEL)
         self.voice = Voice()
         self.actions = Actions()
         
@@ -34,17 +43,23 @@ class Jarvis:
         print("\n" + "="*60)
         print("✅ JARVIS LISTO PARA TRABAJAR")
         print("="*60)
-        print("\n💡 EJEMPLOS DE COMANDOS:")
-        print("   • ¿Qué hora es?")
-        print("   • ¿Qué día es hoy?")
-        print("   • Abrir YouTube")
-        print("   • ¿Quién fue Einstein?")
-        print("   • Explica qué es Python")
+        self.show_help()
+    
+    def show_help(self):
+        """Muestra la ayuda"""
+        print("\n💡 COMANDOS DISPONIBLES:")
+        print("   • ¿Qué hora es? - Hora actual")
+        print("   • ¿Qué día es hoy? - Fecha actual")
+        print("   • Hola Jarvis - Saludo")
+        print("   • Cómo estás - Estado del sistema")
+        print("   • Abrir navegador / YouTube - Abre sitios web")
+        print("   • Bloquear pantalla - Bloquea la PC")
+        print("   • CUALQUIER pregunta - Jarvis responde con IA")
         print("\n🎤 Habla normalmente. Presiona Ctrl+C para salir.\n")
     
     def process_command(self, text):
-        """Procesa el comando y ejecuta acciones"""
-        # Primero, verificar acciones rápidas
+        """Procesa el comando"""
+        # Verificar acciones del sistema
         action_result = self.actions.execute(text)
         if action_result:
             return action_result
@@ -66,9 +81,8 @@ class Jarvis:
                 
                 if text:
                     print(f"\n🧑 Tú: {text}")
-                    
-                    # Procesar
                     print("🤔 Procesando...", end=" ", flush=True)
+                    
                     response = self.process_command(text)
                     
                     print(f"\n🤖 Jarvis: {response}")

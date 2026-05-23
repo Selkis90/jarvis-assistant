@@ -1,3 +1,8 @@
+"""
+Módulo de acciones - Manos de Jarvis
+Ejecuta comandos del sistema
+"""
+
 import subprocess
 import webbrowser
 import os
@@ -28,7 +33,7 @@ class Actions:
     
     def lock_screen(self):
         os.system("gnome-screensaver-command -l 2>/dev/null || loginctl lock-session 2>/dev/null")
-        return "Pantalla bloqueada"
+        return "Pantalla bloqueada, señor"
     
     def open_terminal(self):
         os.system("gnome-terminal &")
