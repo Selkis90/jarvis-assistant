@@ -1,0 +1,25 @@
+# Entorno virtual
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Modelos grandes
+modelo_vosk/
+*.pt
+*.bin
+*.pth
+
+# Audio temporal
+*.mp3
+*.wav
+temp_*.mp3
+
+# Datos personales
+notas_jarvis.txt
+comandos_jarvis.json
+
+# Sistema
+.DS_Store
+Thumbs.db
+*.log

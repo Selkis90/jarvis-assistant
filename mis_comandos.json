@@ -1,0 +1,10 @@
+{
+  "quiero escuchar una cancion de salsa": {
+    "tipo": "web",
+    "url": "https://youtu.be/zJiqglUzWrY?list=RDzJiqglUzWrY"
+  },
+  "quiero escuchar una cancion de ad/dc": {
+    "tipo": "web",
+    "url": "https://youtu.be/XgWUDbYfNe4?list=RDXgWUDbYfNe4"
+  }
+}
